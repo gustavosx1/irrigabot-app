@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Droplets, Sun, Power, PowerOff, Wifi, WifiOff, Leaf } from "lucide-react";
+import { Droplets, Sun, Power, PowerOff, Wifi, WifiOff, Leaf, CloudSun, Info } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
