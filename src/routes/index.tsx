@@ -182,6 +182,68 @@ function IrrigaBot() {
         </Card>
 
         <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CloudSun className="h-4 w-4 text-yellow-500" />
+              <div className="font-semibold">Monitor de luminosidade</div>
+            </div>
+            <Badge variant={lowSince ? "destructive" : "default"}>
+              {lowSince ? "Abaixo do alvo" : "OK"}
+            </Badge>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 p-3">
+            <div className="text-xs text-muted-foreground">
+              Tempo com luz abaixo de {luzMin}%
+            </div>
+            <div className="text-2xl font-bold font-mono mt-1">
+              {lowSince ? formatDur(now - lowSince) : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Atual: {s ? Math.round(s.luz) : "—"}% · Alvo mínimo: {luzMin}%
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Limite de luz</span>
+              <span className="font-mono">{luzMin}%</span>
+            </div>
+            <Slider
+              value={[luzMin]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={([v]) => setLuzMin(v)}
+            />
+          </div>
+
+          <div className="flex gap-2 text-xs text-muted-foreground items-start border-t pt-3">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div>
+              <div className="font-medium text-foreground mb-1">
+                Como os % se traduzem para plantas reais
+              </div>
+              <p className="mb-2">
+                O sensor LDR mede 0–100% (relativo). Calibrando contra um luxímetro,
+                a referência aproximada para plantas ornamentais é:
+              </p>
+              <ul className="space-y-0.5">
+                <li>• <b>0–25%</b> (&lt;500 lux): sombra densa — só suculentas de sombra, samambaias resistentes</li>
+                <li>• <b>25–50%</b> (500–2 000 lux): meia-sombra — jiboia, zamioculca, peperômia</li>
+                <li>• <b>50–75%</b> (2 000–10 000 lux): luz indireta clara — maioria das folhagens e flores de interior</li>
+                <li>• <b>75–100%</b> (&gt;10 000 lux): pleno sol — temperos, hortaliças, suculentas de sol, cactos</li>
+              </ul>
+              <p className="mt-2">
+                Hortaliças e temperos precisam de ≥ 4–6 h/dia acima de 60–70% para
+                não estiolar. Suculentas toleram &lt; 30% por curtos períodos.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+
+        <Card className="p-4 space-y-3">
           <div className="font-semibold">Perfil de planta</div>
           <div className="flex flex-wrap gap-2">
             {(Object.keys(perfis) as PerfilKey[]).map((k) => (
