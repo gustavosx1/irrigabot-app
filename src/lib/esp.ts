@@ -61,8 +61,8 @@ export async function setPump(state: boolean) {
   sim.bomba = state;
   try {
     await espFetch([
-      `/api/pump?state=${state ? 1 : 0}`,
-      `/pump?state=${state ? 1 : 0}`,
+      `/api/pump?state=${state ? 0 : 1}`,
+      `/pump?state=${state ? 0 : 1}`,
     ]);
     return { ok: true, bomba: state, simulated: false };
   } catch {
