@@ -39,10 +39,23 @@ const perfis = {
 
 type PerfilKey = keyof typeof perfis;
 
+function formatDur(ms: number) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min ${sec}s`;
+  return `${sec}s`;
+}
+
 function IrrigaBot() {
   const [status, setStatus] = useState<Status | null>(null);
   const [perfil, setPerfil] = useState<PerfilKey>("flores");
   const [log, setLog] = useState<{ t: string; msg: string }[]>([]);
+  const [luzMin, setLuzMin] = useState(50);
+  const [lowSince, setLowSince] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
   const lastBomba = useRef<boolean | null>(null);
   const lastOnline = useRef<boolean | null>(null);
 
@@ -56,6 +69,10 @@ function IrrigaBot() {
       const r = await fetch("/api/status");
       const data: Status = await r.json();
       setStatus(data);
+      setLowSince((prev) => {
+        if (data.luz < luzMin) return prev ?? Date.now();
+        return null;
+      });
       if (lastBomba.current !== null && lastBomba.current !== data.bomba) {
         addLog(data.bomba ? "💧 Bomba ligada" : "⏹ Bomba desligada");
       }
@@ -72,8 +89,13 @@ function IrrigaBot() {
   useEffect(() => {
     fetchStatus();
     const id = setInterval(fetchStatus, 5000);
-    return () => clearInterval(id);
-  }, []);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      clearInterval(id);
+      clearInterval(tick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [luzMin]);
 
   async function acionar(state: boolean) {
     await fetch(`/api/pump?state=${state ? 1 : 0}`, { method: "POST" });
