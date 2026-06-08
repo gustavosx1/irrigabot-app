@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Droplets, Sun, Power, PowerOff, Wifi, WifiOff, Leaf } from "lucide-react";
+import { Droplets, Sun, Power, PowerOff, Wifi, WifiOff, Leaf, CloudSun, Info } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,10 +39,23 @@ const perfis = {
 
 type PerfilKey = keyof typeof perfis;
 
+function formatDur(ms: number) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min ${sec}s`;
+  return `${sec}s`;
+}
+
 function IrrigaBot() {
   const [status, setStatus] = useState<Status | null>(null);
   const [perfil, setPerfil] = useState<PerfilKey>("flores");
   const [log, setLog] = useState<{ t: string; msg: string }[]>([]);
+  const [luzMin, setLuzMin] = useState(50);
+  const [lowSince, setLowSince] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
   const lastBomba = useRef<boolean | null>(null);
   const lastOnline = useRef<boolean | null>(null);
 
@@ -56,6 +69,10 @@ function IrrigaBot() {
       const r = await fetch("/api/status");
       const data: Status = await r.json();
       setStatus(data);
+      setLowSince((prev) => {
+        if (data.luz < luzMin) return prev ?? Date.now();
+        return null;
+      });
       if (lastBomba.current !== null && lastBomba.current !== data.bomba) {
         addLog(data.bomba ? "💧 Bomba ligada" : "⏹ Bomba desligada");
       }
@@ -72,8 +89,13 @@ function IrrigaBot() {
   useEffect(() => {
     fetchStatus();
     const id = setInterval(fetchStatus, 5000);
-    return () => clearInterval(id);
-  }, []);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      clearInterval(id);
+      clearInterval(tick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [luzMin]);
 
   async function acionar(state: boolean) {
     await fetch(`/api/pump?state=${state ? 1 : 0}`, { method: "POST" });
@@ -158,6 +180,68 @@ function IrrigaBot() {
             </Button>
           </div>
         </Card>
+
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CloudSun className="h-4 w-4 text-yellow-500" />
+              <div className="font-semibold">Monitor de luminosidade</div>
+            </div>
+            <Badge variant={lowSince ? "destructive" : "default"}>
+              {lowSince ? "Abaixo do alvo" : "OK"}
+            </Badge>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 p-3">
+            <div className="text-xs text-muted-foreground">
+              Tempo com luz abaixo de {luzMin}%
+            </div>
+            <div className="text-2xl font-bold font-mono mt-1">
+              {lowSince ? formatDur(now - lowSince) : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Atual: {s ? Math.round(s.luz) : "—"}% · Alvo mínimo: {luzMin}%
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Limite de luz</span>
+              <span className="font-mono">{luzMin}%</span>
+            </div>
+            <Slider
+              value={[luzMin]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={([v]) => setLuzMin(v)}
+            />
+          </div>
+
+          <div className="flex gap-2 text-xs text-muted-foreground items-start border-t pt-3">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <div>
+              <div className="font-medium text-foreground mb-1">
+                Como os % se traduzem para plantas reais
+              </div>
+              <p className="mb-2">
+                O sensor LDR mede 0–100% (relativo). Calibrando contra um luxímetro,
+                a referência aproximada para plantas ornamentais é:
+              </p>
+              <ul className="space-y-0.5">
+                <li>• <b>0–25%</b> (&lt;500 lux): sombra densa — só suculentas de sombra, samambaias resistentes</li>
+                <li>• <b>25–50%</b> (500–2 000 lux): meia-sombra — jiboia, zamioculca, peperômia</li>
+                <li>• <b>50–75%</b> (2 000–10 000 lux): luz indireta clara — maioria das folhagens e flores de interior</li>
+                <li>• <b>75–100%</b> (&gt;10 000 lux): pleno sol — temperos, hortaliças, suculentas de sol, cactos</li>
+              </ul>
+              <p className="mt-2">
+                Hortaliças e temperos precisam de ≥ 4–6 h/dia acima de 60–70% para
+                não estiolar. Suculentas toleram &lt; 30% por curtos períodos.
+              </p>
+            </div>
+          </div>
+        </Card>
+
 
         <Card className="p-4 space-y-3">
           <div className="font-semibold">Perfil de planta</div>
