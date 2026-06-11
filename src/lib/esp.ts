@@ -30,7 +30,7 @@ async function espFetch(paths: string | string[], init?: RequestInit) {
 
   for (const path of candidates) {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 2500);
+    const t = setTimeout(() => ctrl.abort(), 8000);
     try {
       const r = await fetch(`${ESP_IP}${path}`, { ...init, signal: ctrl.signal });
       if (!r.ok) throw new Error(`esp_${r.status}`);
