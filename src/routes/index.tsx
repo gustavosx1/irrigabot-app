@@ -164,20 +164,12 @@ function IrrigaBot() {
         </div>
 
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div>
               <div className="text-sm text-muted-foreground">Bomba d'água</div>
               <div className="text-xl font-semibold">{s?.bomba ? "Ligada" : "Desligada"}</div>
             </div>
             <div className={`h-3 w-3 rounded-full ${s?.bomba ? "bg-primary animate-pulse" : "bg-muted"}`} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => acionar(true)} disabled={s?.bomba}>
-              <Power className="h-4 w-4 mr-1" /> Acionar
-            </Button>
-            <Button variant="outline" onClick={() => acionar(false)} disabled={!s?.bomba}>
-              <PowerOff className="h-4 w-4 mr-1" /> Desligar
-            </Button>
           </div>
         </Card>
 
